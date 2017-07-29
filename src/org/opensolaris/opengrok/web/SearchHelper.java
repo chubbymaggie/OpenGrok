@@ -232,9 +232,11 @@ public class SearchHelper {
      * <li>{@link #projects}</li> <li>{@link #errorMsg} if an error occurs</li>
      * </ul>
      *
-     * @param projects project paths. If empty, a no-project setup
+     * @param projects project names. If empty, a no-project setup
      * is assumed (i.e. DATA_ROOT/index will be used instead of possible
-     * multiple DATA_ROOT/$project/index).
+     * multiple DATA_ROOT/$project/index). If the set contains projects
+     * not known in the configuration or projects not yet indexed,
+     * an error will be returned in {@link #errorMsg}.
      * @return this instance
      */
     public SearchHelper prepareExec(SortedSet<String> projects) {
@@ -260,17 +262,25 @@ public class SearchHelper {
                 // Check list of project names first to make sure all of them
                 // are valid and indexed.
                 closeOnDestroy = false;
-                Set <Project> projectSet = projects.stream().
-                    map(x -> Project.getProject(x)).collect(Collectors.toSet());
-                if (projectSet.contains(null)) {
-                    errorMsg = "Project list contains invalid projects";
+                Set<String> invalidProjects = projects.stream().
+                    filter(proj -> (Project.getByName(proj) == null)).
+                    collect(Collectors.toSet());
+                if (invalidProjects.size() > 0) {
+                    errorMsg = "Project list contains invalid projects: " +
+                        String.join(", ", invalidProjects);
                     return this;
                 }
-                if (projectSet.stream().
+                Set<Project> notIndexedProjects =
+                    projects.stream().
+                    map(x -> Project.getByName(x)).
                     filter(proj -> !proj.isIndexed()).
-                    collect(Collectors.toSet()).size() > 0) {
-                        errorMsg = "Some of the projects to be searched are not indexed yet.";
-                        return this;
+                    collect(Collectors.toSet());
+                if (notIndexedProjects.size() > 0) {
+                    errorMsg = "Some of the projects to be searched are not indexed yet: " +
+                        String.join(", ", notIndexedProjects.stream().
+                        map(proj -> proj.getName()).
+                        collect(Collectors.toSet()));
+                    return this;
                 }
 
                 // We use MultiReader even for single project. This should

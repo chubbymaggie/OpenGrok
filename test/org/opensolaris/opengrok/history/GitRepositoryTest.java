@@ -77,6 +77,15 @@ public class GitRepositoryTest {
         instance = null;
     }
 
+    @Test
+    public void testDetermineCurrentVersion() throws Exception {
+        File root = new File(repository.getSourceRoot(), "git");
+        GitRepository gitrepo
+                = (GitRepository) RepositoryFactory.getRepository(root);
+        String ver = gitrepo.determineCurrentVersion();
+        Assert.assertNotNull(ver);
+    }
+
     /**
      * Test of parseAnnotation method, of class GitRepository.
      * @throws java.lang.Exception
@@ -135,16 +144,7 @@ public class GitRepositoryTest {
             {"abcd", "expected exception"},
             {"2016-01-01 10:00:00", "expected exception"},
             {"2016 Sat, 5 Apr 2008 15:12:51 +0000", "expected exception"},
-            {"Sat, 5 Dub 2008 15:12:51 +0000", "expected exception"},
-            {"Ned, 06 Apr 2008 15:12:51 +0730", "expected exception"},
-            {"Sat, 1 Apr 2008 15:12:51 +0000", null}, // lenient - wrong date vs. day
-            {"Sat, 40 Apr 2008 15:12:51 +0000", null}, // lenient - wrong day
-            {"Sat, 5 Apr 2008 28:12:51 +0000", null}, // lenient - wrong hour
-            {"Sat, 5 Apr 2008 15:63:51 +0000", null}, // lenient - wrong minute
-            {"Sat, 5 Apr 2008 15:12:51 +0000", null},
-            {"Sun, 06 Apr 2008 15:12:51 +0730", null},
-            {"1 Apr 2008 15:12:51 +0300", null},
-            {"2 Apr 2008 15:12:51 GMT", null}
+            {"2017-07-25T13:17:44+02:00", null},
         };
 
         DateFormat format = new GitRepository().getDateFormat();
